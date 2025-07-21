@@ -55,8 +55,8 @@ No building required! Use the pre-built image from GitHub Container Registry:
 
 ```bash
 # Download the compose file
-curl -O https://raw.githubusercontent.com/your-username/beacon/main/docker-compose.yml
-curl -O https://raw.githubusercontent.com/your-username/beacon/main/.env.example
+curl -O https://raw.githubusercontent.com/kaonashie/beacon/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/kaonashie/beacon/main/.env.example
 
 # Set up environment
 cp .env.example .env
@@ -94,10 +94,38 @@ docker run -d \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/logs:/app/logs \
   --restart unless-stopped \
-  ghcr.io/your-username/beacon:latest
+  ghcr.io/kaonashie/beacon:latest
 ```
 
 That's it! Beacon will be running at http://localhost:3000 with automatic restarts and health checks.
+
+## Portainer Deployment
+
+For Portainer users, use the dedicated compose file with embedded environment variables:
+
+### Method 1: Portainer Stacks
+
+1. In Portainer, go to **Stacks** → **Add Stack**
+2. Copy the contents of `docker-compose.portainer.yml` or use this URL:
+   ```
+   https://raw.githubusercontent.com/Kaonashie/beacon/main/docker-compose.portainer.yml
+   ```
+3. **Edit the environment variables** in the YAML:
+   - Replace `your_cloudflare_api_token_here` with your actual API token
+   - Replace `your_zone_id_here` with your zone ID  
+   - Replace `your-domain.com` with your domain
+4. Click **Deploy the stack**
+
+### Method 2: Portainer with Repository
+
+1. In Portainer, go to **Stacks** → **Add Stack**
+2. Choose **Repository** tab
+3. Repository URL: `https://github.com/Kaonashie/beacon`
+4. Compose path: `docker-compose.portainer.yml`
+5. Set **Environment variables** in the Portainer UI:
+   - `CLOUDFLARE_API_TOKEN=your_token_here`
+   - `CLOUDFLARE_ZONE_ID=your_zone_id_here`
+   - `DNS_RECORD_NAME=your-domain.com`
 
 ## Environment Setup
 
@@ -148,8 +176,8 @@ Beacon automatically builds and publishes Docker images on every push to main:
 
 ### Image Tags
 
-- `ghcr.io/your-username/beacon:latest` - Latest stable build
-- `ghcr.io/your-username/beacon:v1.0.0` - Specific version tags
-- `ghcr.io/your-username/beacon:main` - Latest main branch build
+- `ghcr.io/kaonashie/beacon:latest` - Latest stable build
+- `ghcr.io/kaonashie/beacon:v1.0.0` - Specific version tags
+- `ghcr.io/kaonashie/beacon:main` - Latest main branch build
 
 Built with TypeScript, Express, and a focus on simplicity.
