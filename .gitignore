@@ -46,7 +46,5 @@ Thumbs.db
 .claude/
 CLAUDE.md
 
-# Docker
-Dockerfile
-docker-compose.yml
-.dockerignore
+# Docker (keep .dockerignore in repo, ignore runtime files)
+.docker/

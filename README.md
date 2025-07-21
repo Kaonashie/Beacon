@@ -45,6 +45,43 @@ I just wanted a simple program that keeps a DNS record updated and tells me when
    npm start
    ```
 
+4. **Open http://localhost:3000** and you're done!
+
+## Docker Setup (Recommended for Production)
+
+If you prefer Docker (great for servers), it's even easier:
+
+```bash
+# Clone the repo
+git clone <this-repo>
+cd beacon
+
+# Copy environment file
+cp .env.example .env
+# Edit .env with your Cloudflare details
+
+# Run with Docker Compose
+docker-compose up -d
+```
+
+That's it! Beacon will be running at http://localhost:3000 with automatic restarts and health checks.
+
+### Manual Docker Build
+
+```bash
+# Build the image
+docker build -t beacon .
+
+# Run the container
+docker run -d \
+  --name beacon \
+  -p 3000:3000 \
+  --env-file .env \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/logs:/app/logs \
+  --restart unless-stopped \
+  beacon
+```
 
 ## Environment Setup
 
