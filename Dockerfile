@@ -23,8 +23,8 @@ RUN npm prune --production
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S beacon -u 1001
 
-# Create data directory with proper permissions
-RUN mkdir -p /app/data && chown beacon:nodejs /app/data
+# Create data and logs directories with proper permissions
+RUN mkdir -p /app/data /app/logs && chown beacon:nodejs /app/data /app/logs
 
 # Switch to non-root user
 USER beacon

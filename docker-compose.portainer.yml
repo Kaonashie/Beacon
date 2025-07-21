@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   beacon:
-    image: ghcr.io/Kaonashie/beacon:latest  
+    image: ghcr.io/Kaonashie/beacon:latest
     container_name: beacon
     restart: unless-stopped
     ports:
@@ -17,8 +17,9 @@ services:
       - CHECK_INTERVAL_MINUTES=10
       - PORT=3000
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
+      # Use named volumes for easier management in Portainer
+      - beacon_data:/app/data
+      - beacon_logs:/app/logs
     healthcheck:
       test: ["CMD", "node", "-e", "http.get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
       interval: 30s
@@ -26,18 +27,8 @@ services:
       retries: 3
       start_period: 40s
 
-  # Alternative: Build locally instead of using pre-built image
-  # Uncomment this section and comment out the above if you want to build locally
-  # beacon:
-  #   build: .
-  #   container_name: beacon
-  #   restart: unless-stopped
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     - NODE_ENV=production
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./data:/app/data
-  #     - ./logs:/app/logs
+volumes:
+  beacon_data:
+    driver: local
+  beacon_logs:
+    driver: local
