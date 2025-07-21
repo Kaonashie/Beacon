@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "concurrently \"tsc --watch\" \"tsx src/server.ts\"",
-    "build": "tsc && tsc public/client.ts --outFile public/client.js --target ES2022",
+    "build": "tsc && tsc public/client.ts --outFile public/client.js --target ES2022 --skipLibCheck",
     "start": "node dist/server.js"
   },
   "dependencies": {
