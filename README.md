@@ -127,6 +127,14 @@ For Portainer users, use the dedicated compose file with embedded environment va
    - `CLOUDFLARE_ZONE_ID=your_zone_id_here`
    - `DNS_RECORD_NAME=your-domain.com`
 
+### Method 3: Simple (No Persistent Data)
+
+For testing or when you don't need persistent logs/config:
+```
+https://raw.githubusercontent.com/Kaonashie/beacon/main/docker-compose.simple.yml
+```
+This version stores everything inside the container - no volumes needed.
+
 ## Environment Setup
 
 Create a `.env` file with your Cloudflare credentials:

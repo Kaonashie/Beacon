@@ -3,55 +3,63 @@ import http from 'http';
 import { Logger } from './logger.js';
 
 export class IpDetector {
-  private static readonly TIMEOUT = 5000; // 5 seconds
+  private static readonly TIMEOUT = 10000; // 10 seconds (increased)
   private static readonly MAX_RETRIES = 3;
-  private static readonly RETRY_DELAYS = [1000, 2000, 4000]; // 1s, 2s, 4s
+  private static readonly RETRY_DELAYS = [2000, 5000, 10000]; // 2s, 5s, 10s (increased)
 
   static async getCurrentIp(): Promise<string> {
     Logger.debug('Starting IP detection');
     
-    // Try primary service first
-    try {
-      const ip = await this.fetchFromIpify();
-      Logger.logIpCheck({
-        success: true,
-        currentIp: ip,
-        context: { service: 'ipify', primary: true }
-      });
-      console.log('IP detected via ipify:', ip);
-      return ip;
-    } catch (error) {
-      Logger.warn('Primary IP service (ipify) failed', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        service: 'ipify'
-      });
-      console.warn('Primary IP service failed:', error);
+    const services = [
+      { name: 'ipify', func: () => this.fetchFromIpify() },
+      { name: 'icanhazip', func: () => this.fetchFromIcanhazip() },
+      { name: 'httpbin', func: () => this.fetchFromHttpbin() },
+      { name: 'ifconfig.me', func: () => this.fetchFromIfconfig() }
+    ];
+
+    let lastError: Error | null = null;
+
+    // Try each service in order
+    for (const service of services) {
+      try {
+        Logger.debug(`Trying IP detection via ${service.name}`);
+        const ip = await service.func();
+        
+        Logger.logIpCheck({
+          success: true,
+          currentIp: ip,
+          context: { service: service.name, attempt: services.indexOf(service) + 1 }
+        });
+        console.log(`IP detected via ${service.name}:`, ip);
+        return ip;
+      } catch (error) {
+        lastError = error as Error;
+        Logger.warn(`IP service ${service.name} failed`, {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          service: service.name,
+          attempt: services.indexOf(service) + 1
+        });
+        console.warn(`IP service ${service.name} failed:`, error);
+        
+        // Add delay between service attempts to avoid overwhelming
+        if (services.indexOf(service) < services.length - 1) {
+          await this.sleep(1000);
+        }
+      }
     }
 
-    // Fallback to secondary service
-    try {
-      const ip = await this.fetchFromIcanhazip();
-      Logger.logIpCheck({
-        success: true,
-        currentIp: ip,
-        context: { service: 'icanhazip', fallback: true }
-      });
-      console.log('IP detected via icanhazip:', ip);
-      return ip;
-    } catch (error) {
-      const errorMsg = 'All IP detection services failed';
-      Logger.logIpCheck({
-        success: false,
-        error: errorMsg,
-        context: { 
-          primaryError: 'ipify failed',
-          fallbackError: error instanceof Error ? error.message : 'Unknown error',
-          services: ['ipify', 'icanhazip']
-        }
-      });
-      console.error('All IP detection services failed:', error);
-      throw new Error('Failed to detect IP address');
-    }
+    const errorMsg = 'All IP detection services failed';
+    Logger.logIpCheck({
+      success: false,
+      error: errorMsg,
+      context: { 
+        servicesAttempted: services.map(s => s.name),
+        lastError: lastError?.message || 'Unknown error',
+        totalServices: services.length
+      }
+    });
+    console.error('All IP detection services failed. Last error:', lastError);
+    throw new Error('Failed to detect IP address from all services');
   }
 
   private static async fetchFromIpify(): Promise<string> {
@@ -60,6 +68,14 @@ export class IpDetector {
 
   private static async fetchFromIcanhazip(): Promise<string> {
     return this.retryOperation(() => this.httpRequest('https://icanhazip.com'));
+  }
+
+  private static async fetchFromHttpbin(): Promise<string> {
+    return this.retryOperation(() => this.httpRequest('https://httpbin.org/ip'));
+  }
+
+  private static async fetchFromIfconfig(): Promise<string> {
+    return this.retryOperation(() => this.httpRequest('https://ifconfig.me/ip'));
   }
 
   private static async retryOperation(operation: () => Promise<string>): Promise<string> {
@@ -109,8 +125,13 @@ export class IpDetector {
               const ip = parsed.ip?.trim();
               if (!ip) throw new Error('No IP in response');
               resolve(ip);
+            } else if (url.includes('httpbin')) {
+              const parsed = JSON.parse(data);
+              const ip = parsed.origin?.trim();
+              if (!ip) throw new Error('No IP in response');
+              resolve(ip);
             } else {
-              // icanhazip returns plain text
+              // icanhazip, ifconfig.me return plain text
               const ip = data.trim();
               if (!ip) throw new Error('Empty response');
               resolve(ip);

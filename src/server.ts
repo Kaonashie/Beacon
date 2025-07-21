@@ -208,6 +208,30 @@ app.put('/api/settings', (req, res) => {
 // API endpoint for force update
 app.post('/api/force-update', async (req, res) => {
   try {
+    // Check cooldown period (5 minutes)
+    const config = StorageService.readConfig();
+    const cooldownMs = 5 * 60 * 1000; // 5 minutes
+    
+    if (config.lastForceUpdateTime) {
+      const timeSinceLastUpdate = Date.now() - new Date(config.lastForceUpdateTime).getTime();
+      if (timeSinceLastUpdate < cooldownMs) {
+        const remainingMs = cooldownMs - timeSinceLastUpdate;
+        const remainingSeconds = Math.ceil(remainingMs / 1000);
+        
+        return res.status(429).json({
+          success: false,
+          ipChanged: false,
+          currentIp: SecurityService.obfuscateIp(config.lastKnownIp),
+          message: `Please wait ${Math.ceil(remainingSeconds / 60)} minutes before forcing another update`,
+          cooldownRemaining: remainingSeconds
+        });
+      }
+    }
+    
+    // Update last force update time
+    config.lastForceUpdateTime = new Date().toISOString();
+    StorageService.writeConfig(config);
+    
     const result = await ipMonitor.forceCheck();
     
     // Obfuscate IP in response
@@ -227,6 +251,41 @@ app.post('/api/force-update', async (req, res) => {
       ipChanged: false,
       currentIp: null,
       message: SecurityService.sanitizeErrorMessage(error instanceof Error ? error.message : 'Unknown error')
+    });
+  }
+});
+
+// API endpoint to check force update cooldown status
+app.get('/api/force-update/cooldown', (req, res) => {
+  try {
+    const config = StorageService.readConfig();
+    const cooldownMs = 5 * 60 * 1000; // 5 minutes
+    
+    if (!config.lastForceUpdateTime) {
+      return res.json({
+        inCooldown: false,
+        remainingSeconds: 0
+      });
+    }
+    
+    const timeSinceLastUpdate = Date.now() - new Date(config.lastForceUpdateTime).getTime();
+    if (timeSinceLastUpdate >= cooldownMs) {
+      return res.json({
+        inCooldown: false,
+        remainingSeconds: 0
+      });
+    }
+    
+    const remainingMs = cooldownMs - timeSinceLastUpdate;
+    const remainingSeconds = Math.ceil(remainingMs / 1000);
+    
+    res.json({
+      inCooldown: true,
+      remainingSeconds
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to check cooldown status'
     });
   }
 });

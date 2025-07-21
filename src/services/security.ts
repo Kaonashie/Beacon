@@ -39,7 +39,7 @@ export class SecurityService {
       const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
       const now = Date.now();
       const windowMs = 15 * 60 * 1000; // 15 minutes
-      const maxRequests = 100; // Max 100 requests per 15 minutes
+      const maxRequests = process.env.NODE_ENV === 'production' ? 100 : 1000; // Higher limit for development
 
       // Clean expired entries
       for (const [key, value] of this.rateLimitStore.entries()) {

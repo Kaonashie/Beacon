@@ -4,6 +4,7 @@ export interface Config {
   lastKnownIp: string | null;
   createdAt: string;
   updatedAt: string;
+  lastForceUpdateTime?: string;
 }
 
 export interface UpdateHistory {

@@ -32,6 +32,8 @@ body {
   line-height: 1.6;
   transition: background-color 300ms ease, color 300ms ease;
   min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .container {
@@ -39,9 +41,10 @@ body {
   margin: 0 auto;
   padding: 40px 24px;
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 /* Settings Icon */
@@ -76,7 +79,6 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding-bottom: 80px; /* Shift content up slightly */
 }
 
 
@@ -99,35 +101,51 @@ body {
   padding: 24px 32px;
   background-color: var(--border);
   border-radius: 12px;
-  display: inline-block;
+  min-height: 80px;
   min-width: 250px;
-  box-shadow: 0 2px 8px var(--shadow), 0 0 0 1px var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 2px 8px var(--shadow),
+    0 0 0 1px var(--border),
+    0 0 20px rgba(0, 0, 0, 0.03);
   position: relative;
 }
 
-.ip-display::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(45deg, var(--text-primary), var(--accent));
-  border-radius: 14px;
-  opacity: 0.1;
-  z-index: -1;
-  filter: blur(8px);
+@media (max-width: 768px) {
+  .ip-display {
+    /* Simplified shadow for mobile performance */
+    box-shadow: 
+      0 1px 4px var(--shadow),
+      0 0 0 1px var(--border);
+  }
 }
 
-[data-theme="dark"] .ip-display::before {
-  opacity: 0.2;
-  filter: blur(12px);
+[data-theme="dark"] .ip-display {
+  box-shadow: 
+    0 2px 8px var(--shadow),
+    0 0 0 1px var(--border),
+    0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 768px) {
+  [data-theme="dark"] .ip-display {
+    /* Simplified shadow for mobile performance in dark mode */
+    box-shadow: 
+      0 1px 4px var(--shadow),
+      0 0 0 1px var(--border);
+  }
 }
 
 .last-update {
   font-size: 0.875rem;
   color: var(--accent);
   margin-bottom: 32px;
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .force-update-btn {
@@ -164,6 +182,31 @@ body {
 
 .status-indicator.active {
   background-color: var(--success);
+  position: relative;
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.status-indicator.active::before,
+.status-indicator.active::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.3) 0%, rgba(34, 197, 94, 0) 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.status-indicator.active::before {
+  animation: gentleRipple 4s ease-out infinite;
+}
+
+.status-indicator.active::after {
+  animation: gentleRipple 4s ease-out infinite 2s;
 }
 
 .status-indicator.checking {
@@ -186,6 +229,34 @@ body {
   }
 }
 
+@keyframes breathe {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.03);
+    box-shadow: 0 0 6px 2px rgba(34, 197, 94, 0.2);
+  }
+}
+
+@keyframes gentleRipple {
+  0% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  60% {
+    opacity: 0.2;
+    transform: translate(-50%, -50%) scale(2.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(3);
+  }
+}
+
 /* Update Log */
 .update-log {
   flex: 0 0 auto;
@@ -204,30 +275,45 @@ body {
   border-radius: 8px;
   overflow: hidden;
   background-color: rgba(255, 255, 255, 0.02);
+  position: relative; /* Make this a positioning context */
+  height: 268px; /* Explicitly set height (320px min-height - 52px header) */
 }
 
 .log-header {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 80px;
+  grid-template-columns: 2fr 1.5fr 1.5fr 1fr;
   gap: 16px;
   padding: 16px;
   background-color: var(--border);
   font-weight: 500;
   font-size: 0.875rem;
   color: var(--accent);
+  height: 52px;
+  box-sizing: border-box;
+  position: relative; /* Ensure header stays on top */
+  z-index: 2;
 }
 
 .log-entry {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 80px;
+  grid-template-columns: 2fr 1.5fr 1.5fr 1fr;
   gap: 16px;
   padding: 16px;
   border-top: 1px solid var(--border);
   font-size: 0.875rem;
   transition: background-color 300ms ease;
   animation: slideInFromTop 400ms ease;
-  min-height: 52px;
+  height: 52px;
   box-sizing: border-box;
+  background-color: var(--bg-primary); /* Give entries a solid background */
+}
+
+.log-entry span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
 }
 
 @keyframes slideInFromTop {
@@ -241,17 +327,31 @@ body {
   }
 }
 
+/* Position both containers to overlap */
+#logEntries, .log-placeholder-container {
+  position: absolute;
+  top: 52px; /* Position below the header */
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Ensure log entries appear on top */
+#logEntries {
+  z-index: 1;
+}
+
 /* Placeholder entries to reserve space - exactly match log-entry dimensions */
 .log-placeholder {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 80px;
+  grid-template-columns: 2fr 1.5fr 1.5fr 1fr;
   gap: 16px;
   padding: 16px;
   border-top: 1px solid var(--border);
   font-size: 0.875rem;
   opacity: 0.3;
   color: var(--accent);
-  min-height: 52px;
+  height: 52px;
   box-sizing: border-box;
   position: relative;
 }
@@ -280,9 +380,9 @@ body {
 
 /* Fixed placeholder container to prevent any layout changes */
 .log-placeholder-container {
-  position: relative;
   transition: opacity 300ms ease;
   opacity: 1; /* Always visible by default */
+  /* position: relative; <-- This is no longer needed here */
 }
 
 .log-placeholder-container.loaded {
@@ -552,6 +652,11 @@ body {
     gap: 8px;
   }
   
+  .log-placeholder {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  
   .log-header span:nth-child(3),
   .log-header span:nth-child(4),
   .log-entry span:nth-child(3),
@@ -562,5 +667,18 @@ body {
   .modal {
     padding: 24px;
     margin: 16px;
+    width: calc(100vw - 32px);
+    max-width: none;
+  }
+
+  .slider-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .slider-value {
+    text-align: center;
+    min-width: auto;
   }
 }
