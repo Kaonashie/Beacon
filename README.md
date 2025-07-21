@@ -2,7 +2,7 @@
 
 > A minimalist dynamic DNS service that just works
 
-![Screenshot placeholder - add your screenshot here]
+<img width="1920" height="996" alt="beacon_screen" src="https://github.com/user-attachments/assets/ef095940-4946-4064-a9be-49e079b5e146" />
 
 Beacon is a clean, simple dynamic DNS service that keeps your Cloudflare DNS records pointed to the right IP address. No fuss, no complicated setup, just a nice interface that tells you what's happening.
 
