@@ -47,9 +47,27 @@ I just wanted a simple program that keeps a DNS record updated and tells me when
 
 4. **Open http://localhost:3000** and you're done!
 
-## Docker Setup (Recommended for Production)
+## Docker Setup (Recommended)
 
-If you prefer Docker (great for servers), it's even easier:
+### Option 1: Pre-built Image (Easiest)
+
+No building required! Use the pre-built image from GitHub Container Registry:
+
+```bash
+# Download the compose file
+curl -O https://raw.githubusercontent.com/your-username/beacon/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/your-username/beacon/main/.env.example
+
+# Set up environment
+cp .env.example .env
+# Edit .env with your Cloudflare details
+
+# Update docker-compose.yml with your GitHub username
+# Then run:
+docker-compose up -d
+```
+
+### Option 2: Build from Source
 
 ```bash
 # Clone the repo
@@ -60,19 +78,15 @@ cd beacon
 cp .env.example .env
 # Edit .env with your Cloudflare details
 
-# Run with Docker Compose
+# Use local build version in docker-compose.yml
+# (uncomment the build section, comment out the image section)
 docker-compose up -d
 ```
 
-That's it! Beacon will be running at http://localhost:3000 with automatic restarts and health checks.
-
-### Manual Docker Build
+### Option 3: Direct Docker Run
 
 ```bash
-# Build the image
-docker build -t beacon .
-
-# Run the container
+# Using pre-built image
 docker run -d \
   --name beacon \
   -p 3000:3000 \
@@ -80,8 +94,10 @@ docker run -d \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/logs:/app/logs \
   --restart unless-stopped \
-  beacon
+  ghcr.io/your-username/beacon:latest
 ```
+
+That's it! Beacon will be running at http://localhost:3000 with automatic restarts and health checks.
 
 ## Environment Setup
 
@@ -120,5 +136,20 @@ Simple, clean, and it just works.
 npm run dev    # Start with auto-reload
 npm run build  # Build for production
 ```
+
+## CI/CD
+
+Beacon automatically builds and publishes Docker images on every push to main:
+
+- **Multi-architecture support**: `linux/amd64` and `linux/arm64`
+- **GitHub Container Registry**: Images published to `ghcr.io`
+- **Automatic tagging**: `latest` for main branch, semantic versioning for tags
+- **Build caching**: Fast builds using GitHub Actions cache
+
+### Image Tags
+
+- `ghcr.io/your-username/beacon:latest` - Latest stable build
+- `ghcr.io/your-username/beacon:v1.0.0` - Specific version tags
+- `ghcr.io/your-username/beacon:main` - Latest main branch build
 
 Built with TypeScript, Express, and a focus on simplicity.

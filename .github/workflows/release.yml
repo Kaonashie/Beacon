@@ -1,0 +1,70 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Generate Release Notes
+      id: release_notes
+      run: |
+        # Get the latest tag
+        LATEST_TAG=$(git describe --tags --abbrev=0 HEAD^)
+        
+        # Generate changelog since last tag
+        echo "## What's Changed" > release_notes.md
+        echo "" >> release_notes.md
+        
+        # Get commits since last tag
+        git log ${LATEST_TAG}..HEAD --pretty=format:"- %s" >> release_notes.md
+        
+        # Set output for later steps
+        echo "notes<<EOF" >> $GITHUB_OUTPUT
+        cat release_notes.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Beacon ${{ github.ref }}
+        body: |
+          ${{ steps.release_notes.outputs.notes }}
+          
+          ## Docker Images
+          
+          This release is available as Docker images:
+          
+          ```bash
+          # AMD64 and ARM64 supported
+          docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          docker pull ghcr.io/${{ github.repository }}:latest
+          ```
+          
+          ## Quick Deploy
+          
+          ```bash
+          # Download and run
+          curl -O https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/docker-compose.yml
+          curl -O https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/.env.example
+          cp .env.example .env
+          # Edit .env with your credentials
+          docker-compose up -d
+          ```
+        draft: false
+        prerelease: false
